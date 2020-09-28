@@ -42,16 +42,16 @@ should allow the user to determine quickly whether one release is earlier%
 We propose using git tags with a structured name to identify and describe
 Unicon releases. The tag name will have three parts described by three
 numbers -- \MMBf*. \MM is the version of Unicon that is stored in
-\texttt{src/h/version.h}; \Bf starts at \Tag*{0} and will increment by one on
+\texttt{src/h/version.h} which will be the version reposrted on the master
+branch; \Bf starts at \Tag*{0} and will increment by one on
 each binary release of Unicon that has \MM as the first part: it will reset
 to \Tag*{0} when \MM changes. \MMP{0} releases will normally be labelled as
-\MM without the trailing \Tag*{.0}.
+\MM without the trailing \Tag*{.0}. \Bf will only show up on release branches. 
 
 Although ``\Bf*'' implies that the reason for a subsequent release based on
-\MM is merely to correct errors, it could also contain new features that are
-not considered important enough to bump \MM but are desirable to release in
-advance of the next \MM binary. There is some further discussion later on
-about the implications of this.
+\MM is merely to correct errors, it could also contain minor features that are
+backported to earlier release for distribution purposes. There is some further
+discussion later on about the implications of this.
 
 As an aside, we considered using the form \MMP*{Patch} governed by the
 popular Semantic Versioning specification [1] but decided against it because
@@ -59,16 +59,11 @@ the Unicon project is unlikely to follow the strict rules about when the
 component numbers must alter. Our proposal is similar in spirit to [1] but
 not as prescriptive.
 
-The svn commit history was linear: after the transition from svn to git,
-some effort is being made currently to ensure that commits made into the git
-master branch continue to form a linear sequence by rebasing new pull
-requests onto its tip. Rebasing involves some extra (manual, and possibly
-error prone) steps during the commit process and, as we become more familar
-with git, we may prefer to use merge commits instead -- which will mean a
-departure from a strictly linear commit history -- although, if we zoom out,
-the commit history will still appear linear in the large.  In any case, the
-release numbering scheme and the release process itself must be able to deal
-with a general graph (of commits) as well as a tree, or a simple sequence.
+The svn commit history was linear; after switching to git this is not the
+case anymore. However, if we zoom out, the commit history will still appear
+linear in the large.  In any case, the release numbering scheme and the
+release process itself must be able to deal with a general graph (of commits)
+as well as a tree, or a simple sequence.
 
 In the absence of maintenance releases, and even though the commit graph
 itself may not be linear, we think that a zoomed out view that only has
@@ -89,9 +84,13 @@ simple linear sequence of releases must become a tree. It {\em could} become
 a general graph -- and git would happily cope with that -- but we are
 proposing that it does not: maintenance releases should be on ``Long Term
 Branches'' (LTBs) that we are {\bf never} going to merge back into the
-master branch. In time, the release tree will thus come to resemble the
-iconic Saguaro cactus. Note that the use of LTBs does not preclude
-cherry-picking commits from the master branch into the LTB or vice-versa.
+master branch. This is a common practice in software development especially 
+for projects with standard binary distribution. In time, the release tree
+will thus come to resemble the iconic Saguaro cactus. Note that the use of
+LTBs does not preclude cherry-picking commits from the master branch into
+the LTB or vice-versa. In fact that would be the common workflow; a fix is 
+applied to the master branch which is deemed to be important to backport to
+earlier releases.
 
 %% Perhaps a nice picture here, based on
 \begin{verbatim}  
@@ -140,18 +139,13 @@ and ready comparator but it might fail in the presence of a release tree (as
 opposed to a release sequence).
 
 We propose that the version string be derived automatically from the git
-meta-data, based on the name of the branch -- ``\texttt{master}'' or
-something else -- and whether or not the tip of the branch is tagged.
+meta-data and whether or not the tip of the branch is tagged.
 
 The version string will be derived using the following rules
 \begin{enumerate}
 \item The version date is the date of the HEAD commit.
 \item If the HEAD commit has a tag name, that tag name is the version number.
-\item If HEAD is untagged the version number depends on the branch name
-\begin{enumerate}
-\item The master branch will use a version number of
-  \Tag{\$VERSION~(pre-release)}
-\item Other branches will use the output of \texttt{git~describe},
+\item If HEAD is untagged the version number will use the output of \texttt{git~describe},
   which will be something like TAG-n-hash (for example \Tag*{13.1-176-g943d2b72})
   
   \begin{tabular}{lp{9cm}}
@@ -173,28 +167,18 @@ table.
 \begin{tabular}{ll|p{7cm}}
   Version ``number'' & Version Date & comments\\
   \hline
-  \Tag{13.2 (pre-release)} &	  \Tag{07-Jun-2020} &
-  Built on the master branch with HEAD untagged.\\
   \Tag{13.1-176-g943d2b72} &  \Tag{07-Jun-2020} &
   Built with the master branch renamed to something else
   (simulating a non-release build on a LTB).\\
   \Tag{13.1.1}	&  \Tag{07-Jun-2020} &
   Built with a tag of \Tag{13.1.1} pointing at HEAD
   (simulating a maintenance release build on a LTB).\\
-  \Tag{13.1.1} & \Tag{07-Jun-2020} &
-  Built on the master branch with a tag of \Tag{13.1.1} pointing at HEAD
-  (demonstrates that a tag overrides the branch name).\\
 \end{tabular}
 
 
 Note that users who use binary releases will only ever see a version string
 like \Tag*{Unicon Version 13.2 07-Jun-2020}. Users who build from the source
-will usually see version strings like the first example (i.e. containing
-``\Tag*{(pre-release)}'') The only time something like
-\Tag{13.1-176-g943d2b72} will ever appear in the version string is if the
-user has downloaded the latest source and has switched to another branch
-before making a build. In such a case we assume they know enough to
-unscramble the output of \texttt{git describe}.
+will usually see version strings like \Tag{13.1-176-g943d2b72}.
 
 When the compiler is in use, the string ``\Tag{(iconc)}'' is automatically
 placed between the version number string and the date, as at present.
